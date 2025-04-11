@@ -8,4 +8,4 @@ class Portfolio(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(30), nullable=False)
-    positions: Mapped[List["Position"]] = relationship("Position", back_populates="portfolio")
+    positions: Mapped[List["Position"]] = relationship("Position", back_populates="portfolio", cascade="all, delete-orphan")
