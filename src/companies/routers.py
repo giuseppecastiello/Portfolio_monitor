@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from src.database import get_async_session
+from src.database import get_async_session, get_or_404, get_responses
 from src.companies.models import Company
 from src.companies.schemas import CompanySchema, CompanyUpdateSchema
 
@@ -10,6 +10,8 @@ router = APIRouter(
     prefix="/companies",
     tags=["companies"]
 )
+
+responses = get_responses(Company)
 
 @router.get("/", response_model=list[CompanySchema])
 async def get_companies(session: AsyncSession = Depends(get_async_session)):
@@ -20,17 +22,7 @@ async def get_companies(session: AsyncSession = Depends(get_async_session)):
     companies = result.fetchall()
     return companies
 
-@router.get("/{company_ticker}", response_model=CompanySchema)
-async def get_company(company_ticker: str, session: AsyncSession = Depends(get_async_session)):
-    """
-    Get a company by Ticker.
-    """
-    result = await session.get(Company, company_ticker)
-    if result is None:
-        return {"error": "Company not found"}
-    return result
-
-@router.post("/add", response_model=CompanySchema)
+@router.post("/add", response_model=CompanySchema, status_code=201, responses={k: responses[k] for k in [201, 400, 422]})
 async def add_company(company: CompanySchema, session: AsyncSession = Depends(get_async_session)):
     """
     Add a new company.
@@ -45,29 +37,35 @@ async def add_company(company: CompanySchema, session: AsyncSession = Depends(ge
     await session.refresh(new_company)
     return new_company
 
-@router.delete("/{company_ticker}", response_model=CompanySchema)
-async def delete_company(company_ticker: str, session: AsyncSession = Depends(get_async_session)):
+@router.get("/{company_ticker}", response_model=CompanySchema, responses={k: responses[k] for k in [200, 404, 422]})
+async def get_company(company_ticker: str, session: AsyncSession = Depends(get_async_session)):
     """
-    Delete a company by Ticker.
+    Get a company by Ticker.
     """
-    result = await session.get(Company, company_ticker)
-    if result is None:
-        return {"error": "Company not found"}
-    await session.delete(result)
-    await session.commit()
-    return result
+    return await get_or_404(Company, session, company_ticker)
 
-@router.put("/{company_ticker}", response_model=CompanySchema)
+@router.put("/{company_ticker}", response_model=CompanySchema, responses={k: responses[k] for k in [200, 400, 404, 422]})
 async def update_company(company_ticker: str, company: CompanyUpdateSchema, session: AsyncSession = Depends(get_async_session)):
     """
     Update a company by Ticker.
     """
-    result = await session.get(Company, company_ticker)
-    if result is None:
-        raise HTTPException(status_code=404, detail="Company not found")
+    result = await get_or_404(Company, session, company_ticker)
     for key, value in company.model_dump().items():
         if value is not None:
             setattr(result, key, value)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Company could not be updated")
     await session.refresh(result)
+    return result
+
+@router.delete("/{company_ticker}", response_model=CompanySchema, responses={k: responses[k] for k in [200, 404, 422]})
+async def delete_company(company_ticker: str, session: AsyncSession = Depends(get_async_session)):
+    """
+    Delete a company by Ticker.
+    """
+    result = await get_or_404(Company, session, company_ticker)
+    await session.delete(result)
+    await session.commit()
     return result
