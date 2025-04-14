@@ -29,10 +29,6 @@ async def add_price(price: PriceSchema, session: AsyncSession = Depends(get_asyn
     Add a new price.
     """
     new_price = Price(**price.model_dump())
-    result = await session.execute(select(Price).where(Price.company_ticker == new_price.company_ticker, Price.date == new_price.date))
-    existing_price = result.scalar_one_or_none()
-    if existing_price:
-        raise HTTPException(status_code=400, detail="Price with this company ticker and date already exists")
     session.add(new_price)
     try:
         await session.commit()

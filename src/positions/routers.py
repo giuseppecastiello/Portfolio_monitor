@@ -28,12 +28,11 @@ async def add_position(position: PositionSchema, session: AsyncSession = Depends
     Add a new position.
     """
     new_position = Position(**position.model_dump())
-    result = await session.execute(select(Position).where(Position.portfolio_id == new_position.portfolio_id, Position.company_ticker == new_position.company_ticker))
-    existing_position = result.scalar_one_or_none()
-    if existing_position:
-        raise HTTPException(status_code=400, detail="Position with this id already exists")
     session.add(new_position)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Position could not be added")
     await session.refresh(new_position)
     return new_position
 
