@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from src.database import get_async_session, get_or_404, get_responses
+from src.database import get_async_session
+from src.util import get_or_404, get_responses
 from src.positions.models import Position
 from src.positions.schemas import PositionSchema, PositionUpdateSchema
 

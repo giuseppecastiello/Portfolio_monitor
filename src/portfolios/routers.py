@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.database import get_async_session, get_or_404, get_responses
+from src.database import get_async_session
+from src.util import get_or_404, get_responses
 from src.portfolios.models import Portfolio
 from src.portfolios.schemas import PortfolioSchema, PortfolioReadSchema
 
