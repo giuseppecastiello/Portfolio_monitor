@@ -2,7 +2,7 @@ from pydantic import Field
 from typing import Optional
 from datetime import date
 from src.schemas import CustomModel
-
+from src.prices.models import CurrencyEnum
 
 class PriceSchema(CustomModel):
     """
@@ -11,6 +11,7 @@ class PriceSchema(CustomModel):
     company_ticker: str = Field(..., description="Ticker of the company", max_length=10)
     market_date: date = Field(..., description="Date of the price")
     close: float = Field(..., description="Close price", gt=0)
+    currency: CurrencyEnum
 
 class PriceUpdateSchema(CustomModel):
     """
@@ -19,3 +20,4 @@ class PriceUpdateSchema(CustomModel):
     company_ticker: Optional[str] = Field(None, description="Ticker of the company", max_length=10)
     market_date: Optional[date] = Field(None, description="Date of the price")
     close: Optional[float] = Field(None, description="Close price", gt=0)
+    currency: Optional[CurrencyEnum]
