@@ -1,5 +1,4 @@
 from typing import AsyncGenerator
-from fastapi import HTTPException
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from src.config import settings

@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_async_session
-from src.util import get_or_404, get_responses
+from src.util import get_or_404, get_responses, is_valid_csv
 from src.portfolios.models import Portfolio
 from src.portfolios.schemas import PortfolioSchema, PortfolioReadSchema
 
@@ -37,12 +37,16 @@ async def add_portfolio(portfolio: PortfolioSchema, session: AsyncSession = Depe
     await session.refresh(new_portfolio)
     return new_portfolio
 
-@router.post("/upload_csv", response_model=PortfolioReadSchema, status_code=201, responses={k: responses[k] for k in [201, 400, 422]})
-def import_portfolio(portfolio: PortfolioSchema, session: AsyncSession = Depends(get_async_session)):
+@router.post("/{portfolio_id}/upload_csv") #, response_model=PortfolioReadSchema, status_code=201, responses={k: responses[k] for k in [201, 400, 422]})
+async def import_portfolio(portfolio_id: int, file: UploadFile, session: AsyncSession = Depends(get_async_session)):
     """
     Import data from csv file and create a new portfolio with the relative positions.
     """
+    contents = await file.read()
+    if not is_valid_csv(contents):
+        raise HTTPException(status_code=400, detail="The uploaded file could not be parsed as a CSV")
     
+    return {"portfolio_id": portfolio_id, "filename": file.filename, "file_size": len(contents)}
 
 @router.get("/{portfolio_id}", response_model=PortfolioReadSchema, responses={k: responses[k] for k in [200, 404, 422]})
 async def get_portfolio(portfolio_id: int, session: AsyncSession = Depends(get_async_session)):
