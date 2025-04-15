@@ -37,6 +37,13 @@ async def add_portfolio(portfolio: PortfolioSchema, session: AsyncSession = Depe
     await session.refresh(new_portfolio)
     return new_portfolio
 
+@router.post("/upload_csv", response_model=PortfolioReadSchema, status_code=201, responses={k: responses[k] for k in [201, 400, 422]})
+def import_portfolio(portfolio: PortfolioSchema, session: AsyncSession = Depends(get_async_session)):
+    """
+    Import data from csv file and create a new portfolio with the relative positions.
+    """
+    
+
 @router.get("/{portfolio_id}", response_model=PortfolioReadSchema, responses={k: responses[k] for k in [200, 404, 422]})
 async def get_portfolio(portfolio_id: int, session: AsyncSession = Depends(get_async_session)):
     """
