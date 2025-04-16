@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,19 +38,19 @@ async def add_price(price: PriceSchema, session: AsyncSession = Depends(get_asyn
     await session.refresh(new_price)
     return new_price
 
-@router.get("/{company_ticker}/{date}", response_model=PriceSchema, responses={k: responses[k] for k in [200, 404, 422]})
-async def get_price(company_ticker: str, date: datetime, session: AsyncSession = Depends(get_async_session)):
+@router.get("/{company_ticker}/{market_date}", response_model=PriceSchema, responses={k: responses[k] for k in [200, 404, 422]})
+async def get_price(company_ticker: str, market_date: date, session: AsyncSession = Depends(get_async_session)):
     """
-    Get a price by company ticker and date.
+    Get a price by company ticker and market_date.
     """
-    return await get_or_404(Price, session, (company_ticker, date))
+    return await get_or_404(Price, session, (company_ticker, market_date))
 
-@router.put("/{company_ticker}/{date}", response_model=PriceUpdateSchema, responses={k: responses[k] for k in [200, 400, 404, 422]})
-async def update_price(company_ticker: str, date: datetime, price: PriceSchema, session: AsyncSession = Depends(get_async_session)):
+@router.put("/{company_ticker}/{market_date}", response_model=PriceUpdateSchema, responses={k: responses[k] for k in [200, 400, 404, 422]})
+async def update_price(company_ticker: str, market_date: date, price: PriceSchema, session: AsyncSession = Depends(get_async_session)):
     """
-    Update a price by company ticker and date.
+    Update a price by company ticker and market_date.
     """
-    result = await get_or_404(Price, session, (company_ticker, date))    
+    result = await get_or_404(Price, session, (company_ticker, market_date))    
     for key, value in price.model_dump().items():
         if value is not None:
             setattr(result, key, value)
@@ -61,12 +61,12 @@ async def update_price(company_ticker: str, date: datetime, price: PriceSchema, 
     await session.refresh(result)
     return result
 
-@router.delete("/{company_ticker}/{date}", response_model=PriceSchema, responses={k: responses[k] for k in [200, 404, 422]})
-async def delete_price(company_ticker: str, date: datetime, session: AsyncSession = Depends(get_async_session)):
+@router.delete("/{company_ticker}/{market_date}", response_model=PriceSchema, responses={k: responses[k] for k in [200, 404, 422]})
+async def delete_price(company_ticker: str, market_date: date, session: AsyncSession = Depends(get_async_session)):
     """
-    Delete a price by company ticker and date.
+    Delete a price by company ticker and market_date.
     """
-    result = await get_or_404(Price, session, (company_ticker, date))
+    result = await get_or_404(Price, session, (company_ticker, market_date))
     await session.delete(result)
     await session.commit()
     return result
