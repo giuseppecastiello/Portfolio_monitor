@@ -34,11 +34,3 @@ def get_responses(model: Base) -> dict:
             "description": "Validation error"
         }
     }
-    
-def is_valid_csv(contents: bytes) -> bool:
-    try:
-        contents_str = contents.decode('utf-8')
-        pd.read_csv(StringIO(contents_str))
-        return True
-    except Exception:
-        return False

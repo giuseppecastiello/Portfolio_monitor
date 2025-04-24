@@ -18,9 +18,8 @@ class CurrencyEnum(str, pyEnum):
     SEK = "SEK"  # Swedish Krona
     SGD = "SGD"  # Singapore Dollar
     NOK = "NOK"  # Norwegian Krone
-    MXN = "MXN"  # Mexican Peso
 
-    def symbol(self) -> str:
+    def currency_to_symbol(self) -> str:
         symbols = {
             "USD": "$",
             "EUR": "€",
@@ -34,10 +33,31 @@ class CurrencyEnum(str, pyEnum):
             "NZD": "NZ$",
             "SEK": "kr",
             "SGD": "S$",
-            "NOK": "kr",
-            "MXN": "$",
+            "NOK": "kr"
         }
         return symbols[self.value]
+    
+    @staticmethod
+    def symbol_to_currency(symbol: str) -> "CurrencyEnum":
+        symbols_to_currency = {
+            "$": "USD",
+            "€": "EUR",
+            "¥": "JPY",
+            "£": "GBP",
+            "A$": "AUD",
+            "C$": "CAD",
+            "CHF": "CHF",
+            "¥": "CNY",
+            "HK$": "HKD",
+            "NZ$": "NZD",
+            "kr": "SEK",  # Could also map to NOK
+            "S$": "SGD",
+            "kr": "NOK",
+        }
+        currency_code = symbols_to_currency.get(symbol)
+        if currency_code:
+            return CurrencyEnum(currency_code)
+        return None
 
 class Price(Base):
     __tablename__ = "prices"
