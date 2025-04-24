@@ -52,13 +52,13 @@ async def add_positions(positions: list[PositionSchema], session: AsyncSession =
     try:
         await session.commit()
     except IntegrityError as e:
-        print(e.detail)
+        print(e)
         raise HTTPException(status_code=400, detail="One or more positions could not be added")
     for position in new_positions:
         await session.refresh(position)
     return new_positions
 
-@router.post("/{portfolio_id}/upload_csv") #, response_model=PortfolioReadSchema, status_code=201, responses={k: responses[k] for k in [201, 400, 422]})
+@router.post("/{portfolio_id}/upload_csv", response_model=list[PositionSchema], status_code=201, responses={k: responses[k] for k in [201, 400, 422]})
 async def import_portfolio_positions(portfolio_id: int, file: UploadFile, session: AsyncSession = Depends(get_async_session)):
     """
     Import data from csv file and create new positions associated with the given portfolio_id.
@@ -74,7 +74,7 @@ async def import_portfolio_positions(portfolio_id: int, file: UploadFile, sessio
         try:
             positions.append(PositionSchema(
                 portfolio_id=portfolio_id, 
-                company_ticker=row['ticker'],
+                company_ticker='AAPL',#row['ticker'],
                 quantity=row['quantity'],
                 date=row['date'],
                 price=row['price'],
@@ -85,7 +85,10 @@ async def import_portfolio_positions(portfolio_id: int, file: UploadFile, sessio
             for error in ve.errors():
                 print(error)
             raise HTTPException(status_code=400, detail=f"{Position.__name__} {row} is not a valid {Position.__name__}")
-    return add_positions(positions)
+    positions = await add_positions(positions, session)
+    print(positions)
+    print(type(positions))
+    return positions
 
 @router.get("/{position_id}", response_model=PositionSchema, responses={k: responses[k] for k in [200, 404, 422]})
 async def get_position(position_id: int, session: AsyncSession = Depends(get_async_session)):
