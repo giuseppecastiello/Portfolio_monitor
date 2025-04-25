@@ -10,6 +10,8 @@ from src.util import get_or_404, get_responses
 from src.positions.models import Position
 from src.positions.schemas import PositionSchema, PositionUpdateSchema
 from src.prices.models import CurrencyEnum
+from src.companies.routers import get_company, add_company
+from src.companies.schemas import CompanySchema
 
 router = APIRouter(
     prefix="/positions",
@@ -27,12 +29,23 @@ async def get_positions(session: AsyncSession = Depends(get_async_session)):
     positions = result.fetchall()
     return positions
 
+async def check_position(position: PositionSchema, session: AsyncSession):
+    new_position = Position(**position.model_dump())
+    try:
+        await get_company(new_position.company_ticker, session)
+    except HTTPException as exception:
+        if exception.status_code == 404:
+            await add_company(CompanySchema(ticker=new_position.company_ticker), session)
+        else:
+            raise HTTPException(exception.status_code, exception.detail, exception.headers)
+    return new_position
+
 @router.post("/add", response_model=PositionSchema, status_code=201, responses={k: responses[k] for k in [201, 400, 422]})
 async def add_position(position: PositionSchema, session: AsyncSession = Depends(get_async_session)):
     """
     Add a new position.
     """
-    new_position = Position(**position.model_dump())
+    new_position = await check_position(position, session)
     session.add(new_position)
     try:
         await session.commit()
@@ -47,7 +60,7 @@ async def add_positions(positions: list[PositionSchema], session: AsyncSession =
     """
     Add a bulk of new positions.
     """
-    new_positions = [Position(**position.model_dump()) for position in positions]
+    new_positions = [await check_position(position, session) for position in positions]
     session.add_all(new_positions)
     try:
         await session.commit()
@@ -74,7 +87,7 @@ async def import_portfolio_positions(portfolio_id: int, file: UploadFile, sessio
         try:
             positions.append(PositionSchema(
                 portfolio_id=portfolio_id, 
-                company_ticker='AAPL',#row['ticker'],
+                company_ticker=row['ticker'],
                 quantity=row['quantity'],
                 date=row['date'],
                 price=row['price'],
@@ -86,8 +99,6 @@ async def import_portfolio_positions(portfolio_id: int, file: UploadFile, sessio
                 print(error)
             raise HTTPException(status_code=400, detail=f"{Position.__name__} {row} is not a valid {Position.__name__}")
     positions = await add_positions(positions, session)
-    print(positions)
-    print(type(positions))
     return positions
 
 @router.get("/{position_id}", response_model=PositionSchema, responses={k: responses[k] for k in [200, 404, 422]})

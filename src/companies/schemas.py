@@ -8,8 +8,8 @@ class CompanySchema(CustomModel):
     Schema for company data.
     """
     ticker: str = Field(..., description="Ticker symbol of the company", max_length=20)
-    name: str = Field(..., description="Name of the company", max_length=50)
-    sector: str = Field(None, description="Sector of the company", max_length=50)
+    name: Optional[str] = Field(None, description="Name of the company", max_length=50)
+    sector: Optional[str] = Field(None, description="Sector of the company", max_length=50)
 
 class CompanyUpdateSchema(CustomModel):
     """

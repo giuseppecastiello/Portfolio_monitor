@@ -175,3 +175,6 @@ cython_debug/
 
 # VScode configuration directory
 .vscode
+
+#yfinance cache
+yfinance.cache
