@@ -57,7 +57,6 @@ async def add_companies(companies: list[CompanySchema], session: AsyncSession = 
     Add a bulk of new companies.
     """
     new_companies = [await check_company(company, session) for company in companies]
-    
     session.add_all(new_companies)
     await session.commit()
     for new_company in new_companies:
