@@ -146,7 +146,7 @@ async def delete_position(position_id: int, session: AsyncSession = Depends(get_
     return result
 
 @router.delete("/delete_all/", responses={k: responses[k] for k in [200, 422]})
-async def delete_position(session: AsyncSession = Depends(get_async_session)):
+async def delete_all_positions(session: AsyncSession = Depends(get_async_session)):
     """
     Delete all positions.
     """

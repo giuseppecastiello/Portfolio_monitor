@@ -97,7 +97,7 @@ async def delete_company(company_ticker: str, session: AsyncSession = Depends(ge
     return result
 
 @router.delete("/delete_all/", responses={k: responses[k] for k in [200, 422]})
-async def delete_position(session: AsyncSession = Depends(get_async_session)):
+async def delete_all_companies(session: AsyncSession = Depends(get_async_session)):
     """
     Delete all companies.
     """
